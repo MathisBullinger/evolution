@@ -1,17 +1,17 @@
 import { clamp } from 'snatchblock'
 import Cell from './cell'
 import Network from './neural/network'
-import { addStat } from './graph'
+import { addStat, plotNetwork } from './graph'
 
 const canvas = document.querySelector('canvas')
 canvas.width = canvas.offsetWidth * devicePixelRatio
 canvas.height = canvas.offsetHeight * devicePixelRatio
 const ctx = canvas.getContext('2d')
 
-const cellCount = 100
+const cellCount = 200
 const width = 128
 const height = 128
-const steps = 80
+const steps = 120
 
 let cells: Cell[] = []
 
@@ -20,7 +20,7 @@ const randomPos = (): [number, number] => {
   while (true) {
     const x = Math.floor(Math.random() * width)
     const y = Math.floor(Math.random() * height)
-    if (cells.every(({ pos }) => pos[0] !== x && pos[1] !== y)) return [x, y]
+    if (cells.every(({ pos }) => pos[0] !== x || pos[1] !== y)) return [x, y]
   }
 }
 
@@ -35,10 +35,11 @@ function render(survivors?: Cell[]) {
   const cw = canvas.width / width
   const ch = canvas.height / height
 
-  for (const cell of cells) {
-    ctx.fillStyle = '#fff'
-    if (survivors) ctx.fillStyle = survivors.includes(cell) ? '#0f0' : '#f00'
-    ctx.fillRect(cell.pos[0] * cw, cell.pos[1] * ch, cw, ch)
+  for (let i = 0; i < cells.length; i++) {
+    ctx.fillStyle = i ? '#fff' : '#88f'
+    if (survivors)
+      ctx.fillStyle = survivors.includes(cells[i]) ? '#0f0' : '#f00'
+    ctx.fillRect(cells[i].pos[0] * cw, cells[i].pos[1] * ch, cw, ch)
   }
 }
 
@@ -50,6 +51,7 @@ const condition = {
     y <= height / 2 + 10,
   notBorder: ({ pos: [x, y] }: Cell) =>
     x >= 10 && x < width - 10 && y >= 10 && y < height - 10,
+  right: ({ pos: [x] }: Cell) => x > width - 5,
 }
 
 let playing = false
@@ -80,18 +82,18 @@ async function start() {
   while (true) {
     console.log(`generation ${++round}`)
     genCount.innerText = round.toString()
-    await wait(1000)
+    plotNetwork(cells[0].brain)
     await playRound()
 
     const survivors: Cell[] = []
-    for (const cell of cells)
-      if (condition.notBorder(cell)) survivors.push(cell)
+    for (const cell of cells) if (condition.right(cell)) survivors.push(cell)
 
     console.log(
       `survived: ${Math.round((survivors.length / cells.length) * 100)}%`
     )
     addStat(survivors.length / cells.length)
     render(survivors)
+    await wait(1000)
 
     cells = []
     for (let i = 0; i < cellCount; i++) {
@@ -140,6 +142,7 @@ async function playRound(step = 0) {
   }
 
   for (const [cell, [x, y]] of moves) cell.pos = [x, y]
+  plotNetwork(cells[0].brain)
 
   if (step >= steps - 1) return
   await wait(0)

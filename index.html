@@ -24,6 +24,10 @@
         overflow: hidden;
       }
 
+      .root > * {
+        flex-grow: 0;
+      }
+
       .main {
         display: flex;
         flex-direction: column;
@@ -61,11 +65,18 @@
       .side {
         padding: 2rem;
         box-sizing: border-box;
+        width: 500px;
       }
 
       canvas.stat {
-        width: 500px;
+        width: 100%;
         height: 200px;
+      }
+
+      canvas.nn {
+        width: 100%;
+        height: 600px;
+        margin-top: 2rem;
       }
     </style>
   </head>
@@ -80,6 +91,7 @@
       </div>
       <div class="side">
         <canvas class="stat"></canvas>
+        <canvas class="nn"></canvas>
       </div>
     </div>
     <script src="src/main.ts" type="module" />

@@ -78,5 +78,5 @@ export default class Network {
     }
   }
 
-  private layers: Node[][] = []
+  public layers: Node[][] = []
 }
