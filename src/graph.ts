@@ -45,11 +45,13 @@ export function plotNetwork(network: Network) {
 
   const pos: [number, number][][] = network.layers.map((layer, l) => {
     const y = buffer + (l / (network.layers.length - 1)) * height
-    const xp =
-      buffer +
-      (((maxWidth - network.layers[l].length) / maxWidth) * nn.canvas.width) / 2
     return layer.map((_, i) => [
-      xp + (i / (network.layers[l].length - 1)) * (nn.canvas.width - 2 * xp),
+      nn.canvas.width / 2 +
+        (network.layers[l].length > 1
+          ? i / (network.layers[l].length - 1) - 0.5
+          : 0) *
+          (network.layers[l].length / maxWidth) *
+          (nn.canvas.width - 2 * buffer),
       y,
     ])
   })
@@ -60,7 +62,6 @@ export function plotNetwork(network: Network) {
         const w = network.layers[l][i].outputs[j].weight
         let cl = w > 0 ? '#88ff88' : '#ff8888'
         cl += `00${Math.round((Math.abs(w) / 4) * 255).toString(16)}`.slice(-2)
-        console.log(w, cl)
         nn.ctx.strokeStyle = cl
 
         nn.ctx.beginPath()
@@ -84,7 +85,7 @@ export function plotNetwork(network: Network) {
         .join('')}`
 
       nn.ctx.beginPath()
-      nn.ctx.ellipse(pos[l][i][0], pos[l][i][1], 20, 20, 0, 0, 2 * Math.PI)
+      nn.ctx.ellipse(pos[l][i][0], pos[l][i][1], 15, 15, 0, 0, 2 * Math.PI)
       nn.ctx.closePath()
       nn.ctx.fill()
       nn.ctx.stroke()

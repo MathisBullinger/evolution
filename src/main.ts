@@ -8,14 +8,14 @@ canvas.width = canvas.offsetWidth * devicePixelRatio
 canvas.height = canvas.offsetHeight * devicePixelRatio
 const ctx = canvas.getContext('2d')
 
-const cellCount = 200
+const cellCount = 250
 const width = 128
 const height = 128
-const steps = 120
+const steps = 150
 
 let cells: Cell[] = []
 
-const makeBrain = () => new Network(2, 2, 2)
+const makeBrain = () => new Network(2, 3, 3, 2)
 const randomPos = (): [number, number] => {
   while (true) {
     const x = Math.floor(Math.random() * width)
@@ -25,7 +25,7 @@ const randomPos = (): [number, number] => {
 }
 
 for (let i = 0; i < cellCount; i++) {
-  const cell = new Cell(makeBrain(), Cell.randomGenome())
+  const cell = new Cell(makeBrain())
   cell.pos = randomPos()
   cells.push(cell)
 }
@@ -51,7 +51,15 @@ const condition = {
     y <= height / 2 + 10,
   notBorder: ({ pos: [x, y] }: Cell) =>
     x >= 10 && x < width - 10 && y >= 10 && y < height - 10,
-  right: ({ pos: [x] }: Cell) => x > width - 5,
+  right: ({ pos: [x] }: Cell) => x > width - 8,
+  topRight: ({ pos: [x, y] }: Cell) =>
+    x >= width - 75 && x <= width - 30 && y >= 30 && y <= 75,
+  diagonal: ({ pos: [x, y] }: Cell) =>
+    Math.abs(height - y - x) < 20 &&
+    x > 5 &&
+    y > 5 &&
+    x <= width - 5 &&
+    y <= height - 5,
 }
 
 let playing = false
@@ -86,14 +94,11 @@ async function start() {
     await playRound()
 
     const survivors: Cell[] = []
-    for (const cell of cells) if (condition.right(cell)) survivors.push(cell)
+    for (const cell of cells) if (condition.diagonal(cell)) survivors.push(cell)
 
-    console.log(
-      `survived: ${Math.round((survivors.length / cells.length) * 100)}%`
-    )
     addStat(survivors.length / cells.length)
     render(survivors)
-    await wait(1000)
+    await wait(300)
 
     cells = []
     for (let i = 0; i < cellCount; i++) {
@@ -106,6 +111,7 @@ async function start() {
   }
 }
 
+let i = 0
 async function playRound(step = 0) {
   render()
 
@@ -145,7 +151,8 @@ async function playRound(step = 0) {
   plotNetwork(cells[0].brain)
 
   if (step >= steps - 1) return
-  await wait(0)
+  // await wait(0)
+  if (i++ % 10 == 0) await wait(0)
   await playRound(step + 1)
 }
 

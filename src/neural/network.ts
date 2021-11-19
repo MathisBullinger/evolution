@@ -78,5 +78,12 @@ export default class Network {
     }
   }
 
+  public countEdges() {
+    let count = 0
+    for (let i = 0; i < this.layers.length - 1; i++)
+      count += this.layers[i].length * this.layers[i + 1].length
+    return count
+  }
+
   public layers: Node[][] = []
 }
