@@ -41,22 +41,50 @@ function render(survivors?: Cell[]) {
   }
 }
 
+const condition = {
+  center: ({ pos: [x, y] }: Cell) =>
+    x >= width / 2 - 10 &&
+    x <= width / 2 + 10 &&
+    y >= height / 2 - 10 &&
+    y <= height / 2 + 10,
+  notBorder: ({ pos: [x, y] }: Cell) =>
+    x >= 10 && x < width - 10 && y >= 10 && y < height - 10,
+}
+
+let playing = false
+let waitCb: (() => void) | null = null
+
+const genCount = document.querySelector<HTMLSpanElement>('.gen')!
+const btPlay = document.querySelector<HTMLButtonElement>('.controls button')!
+
+btPlay.addEventListener('click', () => {
+  playing = !playing
+  btPlay.innerText = playing ? '⏸' : '▶️'
+  waitCb?.()
+})
+
+const wait = (ms: number) =>
+  new Promise<void>((res: any) => {
+    if (playing) {
+      let toId: any = ms ? setTimeout(res, ms) : requestAnimationFrame(res)
+      waitCb = () => {
+        ms ? clearTimeout(toId) : cancelAnimationFrame(toId)
+        waitCb = res
+      }
+    } else waitCb = () => wait(ms).then(res)
+  })
+
 let round = 0
 async function start() {
   while (true) {
-    await new Promise((res) => setTimeout(res, 1000))
     console.log(`generation ${++round}`)
+    genCount.innerText = round.toString()
+    await wait(1000)
     await playRound()
 
     const survivors: Cell[] = []
     for (const cell of cells)
-      if (
-        cell.pos[0] >= width / 2 - 10 &&
-        cell.pos[0] <= width / 2 + 10 &&
-        cell.pos[1] >= height / 2 - 10 &&
-        cell.pos[1] <= height / 2 + 10
-      )
-        survivors.push(cell)
+      if (condition.notBorder(cell)) survivors.push(cell)
 
     console.log(
       `survived: ${Math.round((survivors.length / cells.length) * 100)}%`
@@ -112,7 +140,7 @@ async function playRound(step = 0) {
   for (const [cell, [x, y]] of moves) cell.pos = [x, y]
 
   if (step >= steps - 1) return
-  await new Promise((res) => requestAnimationFrame(res))
+  await wait(0)
   await playRound(step + 1)
 }
 

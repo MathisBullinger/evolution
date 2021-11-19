@@ -8,25 +8,63 @@
     <style>
       :root {
         background-color: #111;
+        color: #fff;
       }
 
       body {
         overscroll-behavior: none;
+        margin: 0;
       }
 
-      canvas {
-        width: 95vmin;
-        height: 95vmin;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border: 1px solid #fff;
+      .root {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: space-around;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        margin: auto;
+        justify-content: space-around;
+      }
+
+      .main canvas {
+        width: 85vmin;
+        height: 85vmin;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+      }
+
+      .controls button {
+        appearance: none;
+        background-color: transparent;
+        border: none;
+        color: inherit;
+        display: block;
+        height: 1.5rem;
+        width: 1.5rem;
+        font-size: 20px;
+        margin-right: 2rem;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <canvas></canvas>
+    <div class="root">
+      <div class="main">
+        <div class="controls">
+          <button>▶️</button>
+          <span>Generation <span class="gen"></span></span>
+        </div>
+        <canvas></canvas>
+      </div>
+    </div>
     <script src="src/main.ts" type="module" />
   </body>
 </html>
