@@ -1,3 +1,4 @@
+import { clamp } from 'snatchblock'
 import Network from './neural/network'
 
 export default class Cell {
@@ -6,7 +7,7 @@ export default class Cell {
     public genome = Cell.randomGenome(brain.countEdges())
   ) {
     for (let i = 0; i < genome.length; i++) {
-      const w = (parseInt(genome[i], 36) / 35) * 8 - 4
+      const w = (parseInt(genome[i], 36) / 36) * 8 - 4
       this.brain.setWeight(i, w)
     }
   }
@@ -16,10 +17,17 @@ export default class Cell {
   reproduce(mate: Cell) {
     let res = ''
     for (let i = 0; i < this.genome.length; i++) {
-      if (Math.random() > 0.995) {
-        console.log('mutate', i)
+      if (Math.random() > 0.999)
         res += Math.floor(Math.random() * 36).toString(36)
-      } else res += (Math.random() > 0.5 ? this.genome : mate.genome)[i]
+      else {
+        if (Math.random() > 0.99)
+          res += clamp(
+            0,
+            Math.round(parseInt(this.genome[i], 36) + Math.random() * 2),
+            35
+          ).toString(36)
+        else res += (Math.random() > 0.5 ? this.genome : mate.genome)[i]
+      }
     }
     return res
   }
@@ -28,7 +36,7 @@ export default class Cell {
     [...Array<string>(n)]
       .map(() =>
         Math.floor(
-          ((Math.sinh(0.5 * 4 - 2) / Math.sinh(2) + 1) / 2) * 36
+          ((Math.sinh(Math.random() * 4 - 2) / 4 / Math.sinh(2) + 1) / 2) * 36
         ).toString(36)
       )
       .join('')

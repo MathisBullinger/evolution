@@ -7,15 +7,19 @@ const canvas = document.querySelector('canvas')
 canvas.width = canvas.offsetWidth * devicePixelRatio
 canvas.height = canvas.offsetHeight * devicePixelRatio
 const ctx = canvas.getContext('2d')
+const genCount = document.querySelector<HTMLSpanElement>('.gen')!
+const btPlay = document.querySelector<HTMLButtonElement>('.controls button')!
+const genomeList = document.querySelector('#genomes')
+const genomes: HTMLLIElement[] = []
 
-const cellCount = 250
+const cellCount = 200
 const width = 128
 const height = 128
 const steps = 150
 
 let cells: Cell[] = []
 
-const makeBrain = () => new Network(2, 3, 3, 2)
+const makeBrain = () => new Network(4, 3, 2, 3)
 const randomPos = (): [number, number] => {
   while (true) {
     const x = Math.floor(Math.random() * width)
@@ -28,6 +32,10 @@ for (let i = 0; i < cellCount; i++) {
   const cell = new Cell(makeBrain())
   cell.pos = randomPos()
   cells.push(cell)
+  const li = document.createElement('li')
+  li.innerText = cell.genome
+  genomeList.appendChild(li)
+  genomes.push(li)
 }
 
 function render(survivors?: Cell[]) {
@@ -65,9 +73,6 @@ const condition = {
 let playing = false
 let waitCb: (() => void) | null = null
 
-const genCount = document.querySelector<HTMLSpanElement>('.gen')!
-const btPlay = document.querySelector<HTMLButtonElement>('.controls button')!
-
 btPlay.addEventListener('click', () => {
   playing = !playing
   btPlay.innerText = playing ? '⏸' : '▶️'
@@ -98,7 +103,7 @@ async function start() {
 
     addStat(survivors.length / cells.length)
     render(survivors)
-    await wait(300)
+    await wait(200)
 
     cells = []
     for (let i = 0; i < cellCount; i++) {
@@ -106,6 +111,7 @@ async function start() {
       const b = survivors[Math.floor(Math.random() * survivors.length)]
       const child = new Cell(makeBrain(), a.reproduce(b))
       child.pos = randomPos()
+      genomes[cells.length].innerText = child.genome
       cells.push(child)
     }
   }
@@ -128,12 +134,24 @@ async function playRound(step = 0) {
         case 1:
           input.setValue(cell.pos[1] / height)
           break
+        case 2:
+          input.setValue(width - 1 - cell.pos[0] / width)
+          break
+        case 3:
+          input.setValue(height - 1 - cell.pos[1] / height)
+          break
         default:
           throw Error('undefined input ' + i)
       }
 
-      let [x, y] = cell.brain.outputs()
+      let [x, y, r] = cell.brain.outputs()
       let move: [x: number, y: number] = [...cell.pos]
+
+      if (Math.random() <= Math.abs(r)) {
+        const d = Math.random() < 0.5 ? 1 : -1
+        if (Math.random() < 0.5) x += d
+        else y += d
+      }
 
       if (Math.random() <= Math.abs(x))
         move[0] = clamp(0, cell.pos[0] + Math.sign(x), width - 1)
@@ -152,7 +170,7 @@ async function playRound(step = 0) {
 
   if (step >= steps - 1) return
   // await wait(0)
-  if (i++ % 10 == 0) await wait(0)
+  if (i++ % 5 == 0) await wait(0)
   await playRound(step + 1)
 }
 
