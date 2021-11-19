@@ -1,6 +1,7 @@
 import { clamp } from 'snatchblock'
 import Cell from './cell'
 import Network from './neural/network'
+import { addStat } from './graph'
 
 const canvas = document.querySelector('canvas')
 canvas.width = canvas.offsetWidth * devicePixelRatio
@@ -89,6 +90,7 @@ async function start() {
     console.log(
       `survived: ${Math.round((survivors.length / cells.length) * 100)}%`
     )
+    addStat(survivors.length / cells.length)
     render(survivors)
 
     cells = []

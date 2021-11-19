@@ -21,6 +21,7 @@
         height: 100vh;
         display: flex;
         justify-content: space-around;
+        overflow: hidden;
       }
 
       .main {
@@ -36,6 +37,10 @@
         height: 85vmin;
       }
 
+      canvas {
+        border: 1px solid #fff;
+      }
+
       .controls {
         display: flex;
         align-items: center;
@@ -47,11 +52,20 @@
         border: none;
         color: inherit;
         display: block;
-        height: 1.5rem;
-        width: 1.5rem;
+        height: 2.5rem;
         font-size: 20px;
         margin-right: 2rem;
         cursor: pointer;
+      }
+
+      .side {
+        padding: 2rem;
+        box-sizing: border-box;
+      }
+
+      canvas.stat {
+        width: 500px;
+        height: 200px;
       }
     </style>
   </head>
@@ -63,6 +77,9 @@
           <span>Generation <span class="gen"></span></span>
         </div>
         <canvas></canvas>
+      </div>
+      <div class="side">
+        <canvas class="stat"></canvas>
       </div>
     </div>
     <script src="src/main.ts" type="module" />
