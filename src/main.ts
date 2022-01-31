@@ -15,11 +15,11 @@ const genomes: HTMLLIElement[] = []
 const cellCount = 200
 const width = 128
 const height = 128
-const steps = 150
+const steps = 200
 
 let cells: Cell[] = []
 
-const makeBrain = () => new Network(4, 3, 2, 3)
+const makeBrain = () => new Network(5, 4, 3, 4)
 const randomPos = (): [number, number] => {
   while (true) {
     const x = Math.floor(Math.random() * width)
@@ -63,12 +63,20 @@ const condition = {
   topRight: ({ pos: [x, y] }: Cell) =>
     x >= width - 75 && x <= width - 30 && y >= 30 && y <= 75,
   diagonal: ({ pos: [x, y] }: Cell) =>
-    Math.abs(height - y - x) < 20 &&
+    Math.abs(height - y - x) < width * 0.07 &&
     x > 5 &&
     y > 5 &&
     x <= width - 5 &&
     y <= height - 5,
+  diagonal2: ({ pos: [x, y] }: Cell) =>
+    condition.diagonal({ pos: [width - x, y] } as any),
+  cross: ({ pos: [x, y] }: Cell) =>
+    Math.abs(x - width / 2) <= 5 || Math.abs(y - height / 2) <= 5,
+  checker: ({ pos: [x, y] }: Cell) => ((x / 20) | 0) % 2 !== ((y / 20) | 0) % 2,
+  pi: ({ pos: [x, y] }: Cell) => Math.abs(x / y - Math.PI) < 0.25,
 }
+
+const test = condition.diagonal2
 
 let playing = false
 let waitCb: (() => void) | null = null
@@ -99,11 +107,11 @@ async function start() {
     await playRound()
 
     const survivors: Cell[] = []
-    for (const cell of cells) if (condition.diagonal(cell)) survivors.push(cell)
+    for (const cell of cells) if (test(cell)) survivors.push(cell)
 
     addStat(survivors.length / cells.length)
     render(survivors)
-    await wait(200)
+    await wait(250)
 
     cells = []
     for (let i = 0; i < cellCount; i++) {
@@ -117,11 +125,12 @@ async function start() {
   }
 }
 
+const isBlocked = (x: number, y: number) =>
+  cells.some(({ pos }) => x === pos[0] && y === pos[1])
+
 let i = 0
 async function playRound(step = 0) {
   render()
-
-  const moves = new Map<Cell, [x: number, y: number]>()
 
   for (const cell of cells) {
     const inputs = cell.brain.inputs()
@@ -140,37 +149,46 @@ async function playRound(step = 0) {
         case 3:
           input.setValue(height - 1 - cell.pos[1] / height)
           break
+        case 4:
+          input.setValue(
+            isBlocked(cell.pos[0] + cell.dir[0], cell.pos[1] + cell.dir[1])
+              ? 1
+              : 0
+          )
+          break
         default:
           throw Error('undefined input ' + i)
       }
 
-      let [x, y, r] = cell.brain.outputs()
-      let move: [x: number, y: number] = [...cell.pos]
+      let [x, y, r, l] = cell.brain.outputs()
+      let move: [x: number, y: number] = [0, 0]
 
+      if (Math.random() <= Math.abs(l)) move = [...cell.dir] as any
       if (Math.random() <= Math.abs(r)) {
         const d = Math.random() < 0.5 ? 1 : -1
         if (Math.random() < 0.5) x += d
         else y += d
       }
+      if (Math.random() <= Math.abs(x)) move[0] = Math.sign(x)
+      if (Math.random() <= Math.abs(y)) move[1] = Math.sign(y)
 
-      if (Math.random() <= Math.abs(x))
-        move[0] = clamp(0, cell.pos[0] + Math.sign(x), width - 1)
-      if (Math.random() <= Math.abs(y))
-        move[1] = clamp(0, cell.pos[1] + Math.sign(y), height - 1)
+      cell.dir = [...move]
+
+      move[0] = clamp(0, cell.pos[0] + move[0], width - 1)
+      move[1] = clamp(0, cell.pos[1] + move[1], height - 1)
+
       if (
         (move[0] !== cell.pos[0] || move[1] !== cell.pos[1]) &&
-        !cells.some(({ pos: [x, y] }) => x === move[0] && y === move[1])
+        !isBlocked(move[0], move[1])
       )
-        moves.set(cell, move)
+        cell.pos = [move[0], move[1]]
     }
   }
 
-  for (const [cell, [x, y]] of moves) cell.pos = [x, y]
   plotNetwork(cells[0].brain)
 
   if (step >= steps - 1) return
-  // await wait(0)
-  if (i++ % 5 == 0) await wait(0)
+  if (i++ % 8 == 0) await wait(0)
   await playRound(step + 1)
 }
 

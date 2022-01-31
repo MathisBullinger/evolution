@@ -60,7 +60,6 @@ export function plotNetwork(network: Network) {
     for (let i = 0; i < network.layers[l].length; i++) {
       for (let j = 0; j < network.layers[l + 1].length; j++) {
         const w = network.layers[l][i].outputs[j].weight
-        console.log(w)
         let cl = w > 0 ? '#88ff88' : '#ff8888'
         cl += `00${Math.round((Math.abs(w) / 4) * 255).toString(16)}`.slice(-2)
         nn.ctx.strokeStyle = cl

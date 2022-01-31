@@ -13,6 +13,10 @@ export default class Cell {
   }
 
   pos: [x: number, y: number] = [0, 0]
+  dir =
+    Math.random() < 0.5
+      ? [Math.random() < 0.5 ? 1 : -1, 0]
+      : [0, Math.random() < 0.5 ? 1 : -1]
 
   reproduce(mate: Cell) {
     let res = ''
@@ -36,7 +40,7 @@ export default class Cell {
     [...Array<string>(n)]
       .map(() =>
         Math.floor(
-          ((Math.sinh(Math.random() * 4 - 2) / 4 / Math.sinh(2) + 1) / 2) * 36
+          ((Math.sinh(0.5 * 4 - 2) / 4 / Math.sinh(2) + 1) / 2) * 36
         ).toString(36)
       )
       .join('')
