@@ -19,7 +19,17 @@ const steps = 200
 
 let cells: Cell[] = []
 
-const makeBrain = () => new Network(5, 4, 3, 4)
+const params = Object.fromEntries(
+  location.search
+    .replace(/^\?/, '')
+    .split('&')
+    .map((v) => v.split('='))
+)
+const layers = params.layers?.split(',').map((v: string) => parseInt(v)) ?? [
+  5, 4, 3, 3,
+]
+
+const makeBrain = () => new Network(...layers)
 const randomPos = (): [number, number] => {
   while (true) {
     const x = Math.floor(Math.random() * width)
@@ -73,10 +83,17 @@ const condition = {
   cross: ({ pos: [x, y] }: Cell) =>
     Math.abs(x - width / 2) <= 5 || Math.abs(y - height / 2) <= 5,
   checker: ({ pos: [x, y] }: Cell) => ((x / 20) | 0) % 2 !== ((y / 20) | 0) % 2,
-  pi: ({ pos: [x, y] }: Cell) => Math.abs(x / y - Math.PI) < 0.25,
+  pi: ({ pos: [x, y] }: Cell) => Math.abs(x / y - Math.PI) < 0.3,
+  rline: ({ pos: [x, y] }: Cell) => Math.abs(x - y) <= (height - y) * 0.07,
+  slit2: ({ pos: [x, y] }) =>
+    Math.abs(height / 2 - y) <= height / 3 &&
+    Math.abs(Math.abs(width / 2 - x) - width / 4) < width / 20,
 }
 
-const test = condition.diagonal2
+let check = params.check ?? 'rline'
+if (/^\d+$/.test(check)) check = Object.keys(condition)[parseInt(check)]
+if (!(check in condition)) alert(`unknown check ${params.check}`)
+const test = condition[check]
 
 let playing = false
 let waitCb: (() => void) | null = null
